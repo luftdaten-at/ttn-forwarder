@@ -22,8 +22,14 @@ def root():
 async def get_uplink_message(request: Request):
     data = await request.json()
     
-    # Access the dev_eui and create x-sensor
+    # Access the dev_eui
     dev_eui = data["end_device_ids"]["dev_eui"]
+    
+    # Bugfix because of sensor.community handling
+    if dev_eui == "70B3D57ED005D5CD":
+       dev_eui = "70B3D57ED005D5CD2"
+    
+    # Set x-sensor variable
     xsensor = "TTN-" + dev_eui
     
     # Access the decoded_payload field
@@ -36,7 +42,10 @@ async def get_uplink_message(request: Request):
     pm2p5 = decoded_payload["pm2p5"]
     pm10 = decoded_payload["pm10"]
     
-    # Send the values to sensor.community    
+    # Send the values to sensor.community
+    url = "https://api.sensor.community/v1/push-sensor-data/"
+    
+    # Send PM values
     headers = {
       "Content-Type": "application/json",
       "X-Pin": "16",
@@ -54,10 +63,9 @@ async def get_uplink_message(request: Request):
       ]
     }   
     
-    url = "https://api.sensor.community/v1/push-sensor-data/"
-    
     response = requests.post(url, json=payload, headers=headers)
     
+
     # Handle the response from the API
     if response.status_code == 200:
         # Request was successful
